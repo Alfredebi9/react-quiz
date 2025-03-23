@@ -20,7 +20,7 @@ const initialState = {
   currentIndex: 0,
   answer: [],
   points: 0,
-  highscore: null,
+  highscore: localStorage.getItem("highscore") || 0,
   countDown: null,
   chosenQuestions: 1,
 };
@@ -33,7 +33,7 @@ function reducer(state, action) {
         ...state,
         allQuestions: action.payload.questions,
         questions: action.payload.questions,
-        highscore: action.payload.highscore,
+        highscore: initialState.highscore || action.payload.highscore,
         status: "ready",
       };
 
@@ -95,11 +95,12 @@ function reducer(state, action) {
         currentIndex: state.currentIndex - 1,
       };
     case "finish":
+      const newHighscore =
+        state.points > state.highscore ? state.points : state.highscore;
       return {
         ...state,
         status: "finished",
-        highscore:
-          state.points > state.highscore ? state.points : state.highscore,
+        highscore: newHighscore,
       };
     case "restart":
       return {
@@ -111,12 +112,13 @@ function reducer(state, action) {
       };
 
     case "tick":
+      const checkHighScore =
+        state.points > state.highscore ? state.points : state.highscore;
       return {
         ...state,
         countDown: state.countDown - 1,
         status: state.countDown === 1 ? "finished" : state.status,
-        highscore:
-          state.points > state.highscore ? state.points : state.highscore,
+        highscore: checkHighScore,
       };
 
     default:
@@ -170,6 +172,16 @@ export default function App() {
         dispatch({ type: "dataFailed" });
       });
   }, []);
+
+  useEffect(() => {
+    if (state.status === "finished" || "tick") {
+      localStorage.setItem("highscore", state.highscore);
+    }
+    if (state.highscore !== null) {
+      localStorage.setItem("highscore", state.highscore);
+    }
+  }, [state.highscore, state.status]);
+
   return (
     <div className="app">
       <Header />
